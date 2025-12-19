@@ -17,11 +17,12 @@ def read_corpus(paths):
     return "\n".join(parts)
 
 def main():
-    ap = argparse.ArgumentParser(description="Raw continuation with HF Transformers (no instruction prompt).")
+    ap = argparse.ArgumentParser(description="Raw continuation with HF Transformers (no instruction prompt). Supports loading a prebuilt Markov model.")
     ap.add_argument("--model", default="Qwen/Qwen2.5-0.5B", help="HF model id (base/causal LM preferred)")
     ap.add_argument("--device", default="cpu", help="cpu or cuda")
-    ap.add_argument("--corpus", nargs="+", required=True)
-    ap.add_argument("--order", type=int, default=2)
+    ap.add_argument("--corpus", nargs="+", help="Paths/globs to plain-text corpus files (used if --markov-path not provided)")
+    ap.add_argument("--markov-path", help="Path to a saved Markov model (JSON or JSON.gz). If provided, corpus reading is skipped.")
+    ap.add_argument("--order", type=int, default=2, help="Markov chain order (used only when building from corpus)")
     ap.add_argument("--seed-len", type=int, default=12)
     ap.add_argument("--prefix", default="")
     ap.add_argument("--count", type=int, default=10)
@@ -35,15 +36,24 @@ def main():
     device = torch.device(args.device)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=torch.float16 if args.device=="cuda" else torch.float32)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model,
+        torch_dtype=torch.float16 if args.device == "cuda" else torch.float32
+    )
     model.to(device)
     model.eval()
 
     from random import Random
     rng = Random(args.rng_seed)
-    text = read_corpus([p for spec in args.corpus for p in glob.glob(spec)])
-    mc = MarkovChain(order=args.order)
-    mc.add_text(text)
+
+    if args.markov_path:
+        mc = MarkovChain.load(args.markov_path)
+    else:
+        if not args.corpus:
+            raise SystemExit("Either provide --markov-path or --corpus globs.")
+        text = read_corpus([p for spec in args.corpus for p in glob.glob(spec)])
+        mc = MarkovChain(order=args.order)
+        mc.add_text(text)
 
     for i in range(args.count):
         seed_words = mc.generate_seed_text(n_words=args.seed_len, rng=rng)
@@ -59,7 +69,6 @@ def main():
             pad_token_id=tokenizer.eos_token_id,
         )
         full = tokenizer.decode(out_ids[0], skip_special_tokens=True)
-        # Print only the new continuation beyond the context:
         print(full[len(context):].strip())
         print("---")
 
