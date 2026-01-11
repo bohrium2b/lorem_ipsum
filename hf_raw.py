@@ -3,6 +3,7 @@ import argparse
 import glob
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from rich import print
 from markov import MarkovChain
 
 def read_corpus(paths):
@@ -21,8 +22,8 @@ def main():
     ap.add_argument("--model", default="Qwen/Qwen2.5-0.5B", help="HF model id (base/causal LM preferred)")
     ap.add_argument("--device", default="cpu", help="cpu or cuda")
     ap.add_argument("--corpus", nargs="+", help="Paths/globs to plain-text corpus files (used if --markov-path not provided)")
-    ap.add_argument("--markov-path", help="Path to a saved Markov model (JSON or JSON.gz). If provided, corpus reading is skipped.")
-    ap.add_argument("--order", type=int, default=2, help="Markov chain order (used only when building from corpus)")
+    ap.add_argument("--markov-path", help="Path to a saved Markov model (JSON or JSON.gz). If provided, corpus reading is skipped.", default="models/corpus-order3.json.gz")
+    ap.add_argument("--order", type=int, default=3, help="Markov chain order (used only when building from corpus)")
     ap.add_argument("--seed-len", type=int, default=12)
     ap.add_argument("--prefix", default="")
     ap.add_argument("--count", type=int, default=10)
@@ -57,6 +58,7 @@ def main():
 
     for i in range(args.count):
         seed_words = mc.generate_seed_text(n_words=args.seed_len, rng=rng)
+        print(f"[red b]Seed: {seed_words}[/red b]")
         context = f"{args.prefix} {seed_words}".strip() if args.prefix else seed_words
         inputs = tokenizer(context, return_tensors="pt").to(device)
         out_ids = model.generate(

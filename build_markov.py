@@ -18,8 +18,8 @@ def read_corpus(paths: List[str]) -> str:
 def main():
     ap = argparse.ArgumentParser(description="Build and save a Markov model from corpus files.")
     ap.add_argument("--corpus", nargs="+", required=True, help="Paths/globs to plain-text corpus files")
-    ap.add_argument("--order", type=int, default=2, help="Markov chain order (1-3 recommended)")
-    ap.add_argument("--out", required=True, help="Output model path (e.g., models/corpus-order2.json.gz)")
+    ap.add_argument("--order", type=int, default=3, help="Markov chain order (1-3 recommended)")
+    ap.add_argument("--out", required=True, help="Output model path (e.g., models/corpus-order3.json.gz)")
     args = ap.parse_args()
 
     # Resolve corpus globs
