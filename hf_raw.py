@@ -2,9 +2,7 @@ from __future__ import annotations
 import argparse
 import glob
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from rich import print
-from markov import MarkovChain
+
 
 def read_corpus(paths):
     import os
@@ -24,15 +22,17 @@ def main():
     ap.add_argument("--corpus", nargs="+", help="Paths/globs to plain-text corpus files (used if --markov-path not provided)")
     ap.add_argument("--markov-path", help="Path to a saved Markov model (JSON or JSON.gz). If provided, corpus reading is skipped.", default="models/corpus-order3.json.gz")
     ap.add_argument("--order", type=int, default=3, help="Markov chain order (used only when building from corpus)")
-    ap.add_argument("--seed-len", type=int, default=12)
+    ap.add_argument("--seed-len", type=int, default=20)
     ap.add_argument("--prefix", default="")
-    ap.add_argument("--count", type=int, default=10)
+    ap.add_argument("--count", type=int, default=15)
     ap.add_argument("--max-new-tokens", type=int, default=160)
-    ap.add_argument("--temperature", type=float, default=0.85)
-    ap.add_argument("--top-p", type=float, default=0.9)
+    ap.add_argument("--temperature", type=float, default=0.98)
+    ap.add_argument("--top-p", type=float, default=0.98)
     ap.add_argument("--rng-seed", type=int, default=None)
     args = ap.parse_args()
-
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from rich import print
+    from markov import MarkovChain
     torch.set_grad_enabled(False)
     device = torch.device(args.device)
 

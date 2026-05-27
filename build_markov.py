@@ -30,6 +30,7 @@ def main():
         raise SystemExit("No corpus files found. Provide --corpus paths/globs to .txt files.")
 
     text = read_corpus(files)
+    print(f"Text: {len(text)} characters from {len(files)} files.")
     mc = MarkovChain(order=args.order)
     mc.add_text(text)
 
