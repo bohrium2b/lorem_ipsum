@@ -32,7 +32,7 @@ def main():
     text = read_corpus(files)
     print(f"Text: {len(text)} characters from {len(files)} files.")
     mc = MarkovChain(order=args.order)
-    mc.add_text(text)
+    mc.add_text(text.lower())
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     mc.save(args.out)
